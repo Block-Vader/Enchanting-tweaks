@@ -1,0 +1,8 @@
+{
+    "variants": {
+        "facing=north": { "model": "enchanting_tweaks:magic_book_container", "y": 90 },
+        "facing=south": { "model": "enchanting_tweaks:magic_book_container", "y": 270 },
+        "facing=west":  { "model": "enchanting_tweaks:magic_book_container"},
+        "facing=east":  { "model": "enchanting_tweaks:magic_book_container", "y": 180 }
+    }
+}

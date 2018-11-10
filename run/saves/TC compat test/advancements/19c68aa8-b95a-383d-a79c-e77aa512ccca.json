@@ -1,0 +1,62 @@
+{
+  "minecraft:story/enchant_item": {
+    "criteria": {
+      "enchanted_item": "2018-11-10 21:51:08 +0100"
+    },
+    "done": true
+  },
+  "minecraft:recipes/building_blocks/sandstone_slab": {
+    "criteria": {
+      "has_sandstone": "2018-11-10 21:51:28 +0100"
+    },
+    "done": true
+  },
+  "minecraft:recipes/building_blocks/sandstone_stairs": {
+    "criteria": {
+      "has_sandstone": "2018-11-10 21:51:28 +0100"
+    },
+    "done": true
+  },
+  "minecraft:recipes/building_blocks/smooth_sandstone": {
+    "criteria": {
+      "has_sandstone": "2018-11-10 21:51:28 +0100"
+    },
+    "done": true
+  },
+  "minecraft:recipes/decorations/chest": {
+    "criteria": {
+      "has_lots_of_items": "2018-11-10 21:52:28 +0100"
+    },
+    "done": true
+  },
+  "enchanting_tweaks:recipes/bookshelves": {
+    "criteria": {
+      "has_book": "2018-11-10 21:50:31 +0100"
+    },
+    "done": true
+  },
+  "minecraft:adventure/adventuring_time": {
+    "criteria": {
+      "desert": "2018-11-10 21:49:49 +0100"
+    },
+    "done": false
+  },
+  "minecraft:recipes/building_blocks/bookshelf": {
+    "criteria": {
+      "has_book": "2018-11-10 21:50:31 +0100"
+    },
+    "done": true
+  },
+  "minecraft:recipes/misc/writable_book": {
+    "criteria": {
+      "has_book": "2018-11-10 21:50:31 +0100"
+    },
+    "done": true
+  },
+  "minecraft:story/root": {
+    "criteria": {
+      "crafting_table": "2018-11-10 21:55:17 +0100"
+    },
+    "done": true
+  }
+}

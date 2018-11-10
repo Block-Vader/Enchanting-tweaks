@@ -1,0 +1,8 @@
+{
+	"credit": "Made with Blockbench, a free, modern block model editor by JannisX11",
+	"parent": "enchanting_tweaks:block/book_container",
+	"textures": {
+		"0": "minecraft:blocks/planks_acacia",
+		"particle": "minecraft:blocks/planks_acacia"
+	}
+}

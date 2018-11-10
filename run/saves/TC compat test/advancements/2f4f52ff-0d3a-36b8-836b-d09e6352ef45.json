@@ -1,0 +1,38 @@
+{
+  "minecraft:recipes/decorations/chest": {
+    "criteria": {
+      "has_lots_of_items": "2018-11-10 22:46:38 +0100"
+    },
+    "done": true
+  },
+  "enchanting_tweaks:recipes/bookshelves": {
+    "criteria": {
+      "has_book": "2018-11-10 22:46:38 +0100"
+    },
+    "done": true
+  },
+  "minecraft:adventure/adventuring_time": {
+    "criteria": {
+      "desert": "2018-11-10 22:46:38 +0100"
+    },
+    "done": false
+  },
+  "minecraft:recipes/building_blocks/bookshelf": {
+    "criteria": {
+      "has_book": "2018-11-10 22:46:38 +0100"
+    },
+    "done": true
+  },
+  "minecraft:recipes/misc/writable_book": {
+    "criteria": {
+      "has_book": "2018-11-10 22:46:38 +0100"
+    },
+    "done": true
+  },
+  "minecraft:story/root": {
+    "criteria": {
+      "crafting_table": "2018-11-10 22:46:38 +0100"
+    },
+    "done": true
+  }
+}

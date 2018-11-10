@@ -1,0 +1,27 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"###",
+		"X X",
+		"###"
+	],
+	"key": {
+		"#": {
+			"item": "natura:overworld_slab",
+      		"data": 2
+			},
+		"X": {
+			"item": "natura:sticks",
+      		"data": 2
+			}
+		},
+	"result": {
+		"item": "enchanting_tweaks:amaranth_book_container"
+	},
+	"conditions":[
+		{
+  			"type": "enchanting_tweaks:mod_loaded",
+  			"mod_id": "natura"
+		}
+	]
+}

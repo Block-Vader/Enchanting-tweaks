@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    "X X",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:wooden_slab",
+      "data": 4
+    },
+    "X": {
+      "item": "minecraft:stick"
+    }
+  },
+  "result": {
+    "item": "enchanting_tweaks:acacia_book_container"
+  }
+}

@@ -1,0 +1,27 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"###",
+		"X X",
+		"###"
+	],
+	"key": {
+		"#": {
+			"item": "natura:nether_slab",
+      		"data": 3
+			},
+		"X": {
+			"item": "natura:sticks",
+      		"data": 11
+			}
+		},
+	"result": {
+		"item": "enchanting_tweaks:fusewood_book_container"
+	},
+	"conditions":[
+		{
+  			"type": "enchanting_tweaks:mod_loaded",
+  			"mod_id": "natura"
+		}
+	]
+}

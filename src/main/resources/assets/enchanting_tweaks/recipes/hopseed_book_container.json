@@ -1,0 +1,27 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"pattern": [
+		"###",
+		"X X",
+		"###"
+	],
+	"key": {
+		"#": {
+			"item": "natura:overworld_slab2",
+      		"data": 1
+			},
+		"X": {
+			"item": "natura:sticks",
+      		"data": 6
+			}
+		},
+	"result": {
+		"item": "enchanting_tweaks:hopseed_book_container"
+	},
+	"conditions":[
+		{
+  			"type": "enchanting_tweaks:mod_loaded",
+  			"mod_id": "natura"
+		}
+	]
+}
