@@ -44,6 +44,7 @@ import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class EnchantmentHandler {
+	private static final UUID modifierUUID = UUID.fromString("e6107045-134f-4c54-a645-75c3ae5c7a27");
 	
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public void onBlock(LivingAttackEvent event)
@@ -115,7 +116,7 @@ public class EnchantmentHandler {
 	public void onUpdate(LivingUpdateEvent event)
 	{
 		EntityLivingBase entity = event.getEntityLiving();
-		AttributeModifier modifier = new AttributeModifier(UUID.fromString("e6107045-134f-4c54-a645-75c3ae5c7a27"), "light_shield", 4, 2);
+		AttributeModifier modifier = new AttributeModifier(modifierUUID, "light_shield", 4, 2);
 		if (entity.isActiveItemStackBlocking() && getShieldEnchantmentLevel(entity, ModEnchantments.weightless) > 0)
 		{
 			if (!entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).hasModifier(modifier))
@@ -167,7 +168,7 @@ public class EnchantmentHandler {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public void onFOVChange(FOVUpdateEvent event)
 	{
-		if (event.getEntity().getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getModifier(UUID.fromString("e6107045-134f-4c54-a645-75c3ae5c7a27")) != null)
+		if (event.getEntity().getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getModifier(modifierUUID) != null)
 		{
 			float f = 1.0F;
 	
