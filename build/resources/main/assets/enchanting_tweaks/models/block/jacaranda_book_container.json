@@ -1,7 +1,0 @@
-{
-	"parent": "enchanting_tweaks:block/book_container",
-	"textures": {
-		"0": "enchanting_tweaks:blocks/jacaranda_planks",
-		"particle": "enchanting_tweaks:blocks/jacaranda_planks"
-	}
-}

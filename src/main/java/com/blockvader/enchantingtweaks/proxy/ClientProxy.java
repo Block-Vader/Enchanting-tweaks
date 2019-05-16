@@ -4,12 +4,13 @@ import com.blockvader.enchantingtweaks.ConfigHandler;
 import com.blockvader.enchantingtweaks.client.ClientEventHandler;
 import com.blockvader.enchantingtweaks.client.model.ModelRegistry;
 import com.blockvader.enchantingtweaks.client.renderer.RenderBookshelf;
+import com.blockvader.enchantingtweaks.eventhandler.ETPacketHandler;
 import com.blockvader.enchantingtweaks.tileentities.TileEntityBookshelf;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
-public class ClientProxy implements CommonProxy {
+public class ClientProxy implements IProxy {
 
 	@Override
 	public void preInit() 
@@ -17,12 +18,12 @@ public class ClientProxy implements CommonProxy {
 		ConfigHandler.clientPreInit();
 		MinecraftForge.EVENT_BUS.register(new ModelRegistry());
 		MinecraftForge.EVENT_BUS.register(new ClientEventHandler());
+    	ETPacketHandler.register();
 	}
 
 	@Override
 	public void init()
 	{
-		
 		ClientRegistry.bindTileEntitySpecialRenderer(TileEntityBookshelf.class, new RenderBookshelf());
 	}
 

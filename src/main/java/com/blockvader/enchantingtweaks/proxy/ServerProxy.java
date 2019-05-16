@@ -1,6 +1,6 @@
 package com.blockvader.enchantingtweaks.proxy;
 
-public class ServerProxy implements CommonProxy{
+public class ServerProxy implements IProxy{
 
 	@Override
 	public void init() {

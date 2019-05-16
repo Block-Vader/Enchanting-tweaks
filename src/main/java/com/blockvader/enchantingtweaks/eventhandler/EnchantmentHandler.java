@@ -2,10 +2,26 @@ package com.blockvader.enchantingtweaks.eventhandler;
 
 import java.lang.reflect.Field;
 import java.util.Random;
-import java.util.UUID;
-
+import java.util.Set;
+import com.blockvader.enchantingtweaks.CapabilitySyncMessage;
+import com.blockvader.enchantingtweaks.ConfigHandler;
+import com.blockvader.enchantingtweaks.HookPlayerMessage;
+import com.blockvader.enchantingtweaks.Main;
+import com.blockvader.enchantingtweaks.blocks.BlockFertilizedFarmland;
+import com.blockvader.enchantingtweaks.capabilities.CapArrowPropertiesProvider;
+import com.blockvader.enchantingtweaks.capabilities.CapMomentumProvider;
+import com.blockvader.enchantingtweaks.capabilities.ICapArrowProperties;
+import com.blockvader.enchantingtweaks.capabilities.ICapMomentum;
+import com.blockvader.enchantingtweaks.enchantments.EnchantmentMeatHook;
+import com.blockvader.enchantingtweaks.enchantments.EnchantmentReach;
+import com.blockvader.enchantingtweaks.enchantments.EnchantmentSpellproof;
+import com.blockvader.enchantingtweaks.enchantments.EnchantmentWeightless;
+import com.blockvader.enchantingtweaks.init.ModBlocks;
 import com.blockvader.enchantingtweaks.init.ModEnchantments;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockCrops;
+import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockFrostedIce;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
@@ -14,36 +30,366 @@ import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.MoverType;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.passive.EntityHorse;
 import net.minecraft.entity.passive.HorseArmorType;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.projectile.EntityArrow;
+import net.minecraft.entity.projectile.EntityArrow.PickupStatus;
+import net.minecraft.entity.projectile.EntityFishHook;
+import net.minecraft.entity.projectile.EntityTippedArrow;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Enchantments;
 import net.minecraft.init.Items;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.ItemShield;
+import net.minecraft.item.ItemFishingRod;
+import net.minecraft.item.ItemHoe;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemTool;
 import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.DamageSource;
+import net.minecraft.potion.PotionType;
+import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraftforge.client.event.FOVUpdateEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingEvent.LivingUpdateEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.UseHoeEvent;
+import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.BlockEvent.HarvestDropsEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class EnchantmentHandler {
+	
+	private static final ResourceLocation CAP_ARROW_PROPERTIES = new ResourceLocation(Main.MOD_ID, "extra_arrow_properties");
+    private static final ResourceLocation CAP_MOMENTUM = new ResourceLocation(Main.MOD_ID, "time_mining");
+	
+	@SubscribeEvent
+	public void attachCapabilities(AttachCapabilitiesEvent<Entity> event)
+	{
+		if (event.getObject() instanceof EntityArrow)
+		{
+			event.addCapability(CAP_ARROW_PROPERTIES, new CapArrowPropertiesProvider());
+		}
+		
+		if (event.getObject() instanceof EntityPlayer)
+		{
+			event.addCapability(CAP_MOMENTUM, new CapMomentumProvider());
+		}
+	}
+	
+	@SubscribeEvent
+    public void applyRandomEffect(EntityJoinWorldEvent event)
+    {
+    	if (event.getEntity() instanceof EntityTippedArrow && !event.getWorld().isRemote)
+    	{
+    		EntityTippedArrow arrow = (EntityTippedArrow) event.getEntity();
+			Entity shooter = arrow.shootingEntity;
+			if (shooter instanceof EntityLivingBase)
+			{
+				Random random = ((EntityLivingBase)shooter).getRNG();
+    			if (EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.INSTABILITY_CURSE, (EntityLivingBase) shooter) > 0 && random.nextBoolean())
+    			{
+    				int i = random.nextInt(ConfigHandler.EffectList.size());
+    				PotionType potionIn = ConfigHandler.EffectList.get(i);
+    				ItemStack effectSource = new ItemStack(Items.TIPPED_ARROW);
+    				PotionUtils.addPotionToItemStack(effectSource, potionIn);
+    				arrow.setPotionEffect(effectSource); //You cannot set tipped potion effect directly, it has to be taken from an item
+    				arrow.pickupStatus = PickupStatus.CREATIVE_ONLY;  //Prevents tipped arrow farming;
+    			}
+			}
+    	}
+    }
+	
+	
+	
+	@SubscribeEvent
+    public void onHoeUse(UseHoeEvent event)
+	{
+		ItemStack hoe = event.getCurrent();
+		EntityPlayer player = event.getEntityPlayer();
+		World worldIn = event.getWorld();
+		BlockPos pos = event.getPos();
+		if (worldIn.getBlockState(pos).getBlock() instanceof BlockCrops) pos = pos.down();
+		int l1 = Math.min(EnchantmentHelper.getEnchantmentLevel(ModEnchantments.FERTILIZER, hoe), 3);
+		int l2 = Math.min(EnchantmentHelper.getEnchantmentLevel(ModEnchantments.AREA, hoe), 2);
+		for (int x = -l2; x <= l2; x++)
+		{
+			for (int z = -l2; z <= l2; z++)
+			{
+				BlockPos pos1 = pos.add(x, 0, z);
+				IBlockState state = worldIn.getBlockState(pos1);
+	            Block block = state.getBlock();
+	            if (worldIn.isAirBlock(pos1.up()) || worldIn.getBlockState(pos1.up()).getBlock() instanceof BlockCrops)
+	            {
+	                if (block == Blocks.GRASS || block == Blocks.GRASS_PATH)
+	                {
+	                    this.setBlock(hoe, player, worldIn, pos1, l1);
+	                }
+	                if (block == Blocks.FARMLAND && l1 > 0)
+	                {
+	                    this.setBlock(hoe, player, worldIn, pos1, l1);
+	                }
+	                if (block == Blocks.DIRT)
+	                {
+	                    if ((BlockDirt.DirtType)state.getValue(BlockDirt.VARIANT) == BlockDirt.DirtType.DIRT)
+	                    {
+	                    	this.setBlock(hoe, player, worldIn, pos1, l1);
+	                    }
+	                }
+	                if (player.getHeldItemMainhand().isEmpty()) return;
+	            }
+			}
+		}
+	}
+	
+	@SubscribeEvent(priority = EventPriority.NORMAL)
+	public void reduceMomentum(LivingUpdateEvent event)
+	{
+		EntityLivingBase entity = event.getEntityLiving();
+		if (entity instanceof EntityPlayer)
+		{
+			ICapMomentum cap = entity.getCapability(CapMomentumProvider.MOMENTUM, null);
+			int momentum = cap.getMomentum();
+			if (momentum > 0)
+			{
+				if (EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.MOMENTUM, entity) > 0)
+				{
+					cap.addTime(-1);
+				}
+				else
+				{
+					cap.setMomentum(0);
+				}
+				if (entity instanceof EntityPlayerMP)
+				ETPacketHandler.NETWORK.sendTo(new CapabilitySyncMessage(cap.getMomentum()), (EntityPlayerMP) entity);
+			}
+		}
+	}
+	
+	@SubscribeEvent(priority = EventPriority.NORMAL)
+	public void onBlockBreak(BlockEvent.BreakEvent event)
+	{
+		EntityPlayer player = event.getPlayer();
+		BlockPos pos = event.getPos();
+		int l = EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.MOMENTUM, player);
+		if (l > 0)
+		{
+			ICapMomentum cap = player.getCapability(CapMomentumProvider.MOMENTUM, null);
+			int m = cap.getMomentum();
+			m = (int) Math.min(m + (16 * event.getState().getBlockHardness(event.getWorld(), event.getPos())), l * 100);
+			cap.setMomentum(m);
+			cap.setTime(200);
+			if (player instanceof EntityPlayerMP)
+			ETPacketHandler.NETWORK.sendTo(new CapabilitySyncMessage(cap.getMomentum()), (EntityPlayerMP) player);
+		}
+		int l2 = Math.min(EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.AREA, player), 2);
+		if (event.getState().getBlock() instanceof BlockCrops && player.getHeldItemMainhand().getItem() instanceof ItemHoe)
+		{
+			if (l2 > 0)
+			{
+				event.setCanceled(true);
+				for (int x = -l2; x <= l2; x++)
+				{
+					for (int z = -l2; z <= l2; z++)
+					{
+						BlockPos pos1 = pos.add(x, 0, z);
+						IBlockState state = event.getWorld().getBlockState(pos1);
+						if (state.getBlock() instanceof BlockCrops)
+						{
+							boolean b = (!player.isCreative() && state.getValue(BlockCrops.AGE) == 7);
+							event.getWorld().destroyBlock(pos1, b);
+							if (EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.REGROWTH, player) > 0)
+							{
+								event.getWorld().setBlockState(pos1, state.withProperty(BlockCrops.AGE, 0));
+							}
+							player.getHeldItemMainhand().damageItem(1, player);
+							if (player.getHeldItemMainhand().isEmpty()) return;
+						}
+					}
+				}
+			}
+			else if (EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.REGROWTH, player) > 0)
+			{
+				IBlockState state = event.getWorld().getBlockState(pos);
+				boolean b = (!player.isCreative() && state.getValue(BlockCrops.AGE) == 7);
+				event.getWorld().destroyBlock(pos, b);
+				event.getWorld().setBlockState(pos, state.withProperty(BlockCrops.AGE, 0));
+				player.getHeldItemMainhand().damageItem(1, player);
+				event.setCanceled(true);
+			}
+		}
+		
+	}
+	
+	@SubscribeEvent(priority = EventPriority.NORMAL)
+	public void boostMining(PlayerEvent.BreakSpeed event)
+	{
+		EntityPlayer player = event.getEntityPlayer();
+		if (player.getHeldItemMainhand().getItem() instanceof ItemTool)
+		{
+			ICapMomentum cap = player.getCapability(CapMomentumProvider.MOMENTUM, null);
+			int m = cap.getMomentum();
+			Set<String> type = ((ItemTool)player.getHeldItemMainhand().getItem()).getToolClasses(player.getHeldItemMainhand());
+			boolean b = false;
+			for (String s : type)
+	        {
+	            if (event.getState().getBlock().isToolEffective(s, event.getState()))
+	                b = true;
+	        }
+			if (m > 0 && b)
+			{
+				event.setNewSpeed((float) event.getOriginalSpeed() * (1 + (m / 100.0f)));
+			}
+		}
+	}
+	
+	@SubscribeEvent(priority = EventPriority.NORMAL)
+    public void attractItems(LivingUpdateEvent event)
+    {
+    	EntityLivingBase entity = event.getEntityLiving();
+    	if (entity instanceof EntityPlayer && EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.MAGNETIC, entity) > 0)
+    	{
+    		AxisAlignedBB aabb = new AxisAlignedBB(entity.posX - 8, entity.posY - 8, entity.posZ - 8, entity.posX + 8, entity.posY + 8, entity.posZ + 8);
+    		for (EntityItem item: entity.getEntityWorld().getEntitiesWithinAABB(EntityItem.class, aabb))
+    		{
+    			//Similar to onUpdate in EntityXPOrb, makes items move towards the player
+    			double d1 = (entity.posX - item.posX) / 8.0D;
+                double d2 = (entity.posY + (double)entity.getEyeHeight() / 2.0D - item.posY) / 8.0D;
+                double d3 = (entity.posZ - item.posZ) / 8.0D;
+                double d4 = Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+                double d5 = 1.0D - d4;
+
+                if (d5 > 0.0D)
+                {
+                    d5 = d5 * d5;
+                    item.motionX += d1 / d4 * d5 * 0.1D;
+                    item.motionY += d2 / d4 * d5 * 0.1D;
+                    item.motionZ += d3 / d4 * d5 * 0.1D;
+                }
+                
+                item.move(MoverType.SELF, item.motionX, item.motionY, item.motionZ);
+    		}
+    	}
+    }
+	
+	@SubscribeEvent
+    public void destroyDroppedItems(HarvestDropsEvent event)
+    {
+    	if (event.getHarvester() != null)
+    	{
+	    	if (EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.DESTRUCTION_CURSE, event.getHarvester()) > 0)
+	    	{
+	    		event.setDropChance(0);
+	    	}
+    	}
+    }
+	
+	@SubscribeEvent
+    public void applyPropertiesToArrow(EntityJoinWorldEvent event)
+    {
+    	if (event.getEntity() instanceof EntityArrow && !event.getWorld().isRemote)
+    	{
+    		EntityArrow arrow = (EntityArrow)event.getEntity();
+    		ICapArrowProperties cap = arrow.getCapability(CapArrowPropertiesProvider.ARROW_PROPERTIES, null);
+    		if (arrow.shootingEntity instanceof EntityLivingBase)
+    		{
+	    		int g = EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.GROUNDING, (EntityLivingBase) arrow.shootingEntity);
+	    		cap.setGroundingLevel(g);
+	    		int l = EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.ITEM_LINK, (EntityLivingBase) arrow.shootingEntity);
+	    		cap.setItemLink(l);
+    		}
+    	}
+    }
+	
+	@SubscribeEvent(priority = EventPriority.LOWEST)
+    public void teleportItems(LivingDropsEvent event)
+	{
+		Entity source = event.getSource().getImmediateSource();
+		Entity trueSource = event.getSource().getTrueSource();
+		if (trueSource instanceof EntityPlayer && source instanceof EntityArrow)
+		{
+			EntityPlayer player = ((EntityPlayer)trueSource);
+			ICapArrowProperties cap = source.getCapability(CapArrowPropertiesProvider.ARROW_PROPERTIES, null);
+			int i = cap.getItemLink();
+			if (player.getRNG().nextInt(3) < i)
+			{
+				for (EntityItem item : event.getDrops())
+				{
+					if (!player.inventory.addItemStackToInventory(item.getItem()));
+					item.setPosition(player.posX, player.posY, player.posZ);
+					trueSource.world.spawnEntity(item);
+				}
+				event.setCanceled(true);
+			}
+		}
+	}
+    
+    @SubscribeEvent
+    public void useDamageBonus(LivingDamageEvent event)
+    {
+    	Entity source = event.getSource().getImmediateSource();
+    	if (source instanceof EntityArrow)
+    	{
+    		Entity target = event.getEntityLiving();
+    		boolean b = false;
+    		for (Class<? extends Entity > c : ConfigHandler.FlyingEntityList)
+    		{
+    			if (c.isInstance(target))
+    			{
+    				b = true;
+    			}
+    		}
+    		if (b)
+    		{
+    			ICapArrowProperties cap = source.getCapability(CapArrowPropertiesProvider.ARROW_PROPERTIES, null);
+    			event.setAmount(event.getAmount()*(cap.getGroundingLevel() * 0.4f + 1.0f));
+    		}
+    	}
+    }
+	
+	@SubscribeEvent
+    public void onFishingRodUse(PlayerInteractEvent.RightClickItem event)
+    {
+    	if (event.getItemStack().getItem() instanceof ItemFishingRod && !event.getWorld().isRemote)
+    	{
+    		ItemStack rod = event.getItemStack();
+    		EntityPlayer player = event.getEntityPlayer();
+    		int i = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.MEAT_HOOK, rod);
+    		if (i > 0 && player.fishEntity != null)
+    		{
+    			EntityFishHook hook = player.fishEntity;
+    			if (hook.caughtEntity != null)
+    			{
+    				if (hook.caughtEntity instanceof EntityPlayerMP)
+    				{
+    					ETPacketHandler.NETWORK.sendTo(new HookPlayerMessage(player.getEntityId(), i), (EntityPlayerMP) hook.caughtEntity);
+    				}
+    				EnchantmentMeatHook.bringInHookedEntity(hook.caughtEntity, player, i);
+    	            hook.caughtEntity = null; //Prevents vanilla retraction which reduces fishing rod durability by 5
+    	            rod.damageItem(1, player); // Reduces fishing rod durability just by 1
+    			}
+    		}
+    	}
+    }
 	
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public void onBlock(LivingAttackEvent event)
@@ -51,73 +397,51 @@ public class EnchantmentHandler {
 		if (!event.getEntity().world.isRemote)
 		{
 			EntityLivingBase living = event.getEntityLiving();
-			boolean flag = getShieldEnchantmentLevel(living, ModEnchantments.spellproof) > 0;
-			if (event.getAmount() > 0.0F && canBlockDamageSource(living, event.getSource(), flag))
+			boolean flag = getShieldEnchantmentLevel(living, ModEnchantments.SPELLPROOF) > 0;
+			if (event.getAmount() > 0.0F && EnchantmentSpellproof.canBlockDamageSource(living, event.getSource(), flag))
 	        {
-				int l = getShieldEnchantmentLevel(living, ModEnchantments.counterattack);
+				int l = getShieldEnchantmentLevel(living, ModEnchantments.COUNTERATTACK);
 				int rand = new Random().nextInt(4);
 				if (l > rand)
 				{
-					living.addPotionEffect(new PotionEffect(ModEnchantments.counterattackeffect, 60));
+					living.addPotionEffect(new PotionEffect(ModEnchantments.POTION_COUNTERATTACK, 60));
 				}
 	        }
 			if (event.getSource().getImmediateSource() instanceof EntityLivingBase)
 			{
 				EntityLivingBase attacker = (EntityLivingBase) event.getSource().getImmediateSource();
-				attacker.removePotionEffect(ModEnchantments.counterattackeffect);
+				attacker.removePotionEffect(ModEnchantments.POTION_COUNTERATTACK);
 			}
 		}
 	}
-	/*
-	@SubscribeEvent(priority = EventPriority.NORMAL)
-	public void onKnockback(LivingKnockBackEvent event)
-	{
-		int i = EnchantmentHelper.getMaxEnchantmentLevel(Enchantments.BLAST_PROTECTION, event.getEntityLiving());
-		event.setStrength(event.getOriginalStrength() * (1 - 0.15f * i));
-	}*/
 	
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public void onHurt(LivingHurtEvent event)
 	{
 		float amount = event.getAmount();
 		EntityLivingBase living = event.getEntityLiving();
-		if (event.getAmount() > 0.0F && canBlockDamageSource(living, event.getSource(), true))
+		if (event.getAmount() > 0.0F && EnchantmentSpellproof.canBlockDamageSource(living, event.getSource(), true))
         {
-			int l = getShieldEnchantmentLevel(living, ModEnchantments.spellproof);
+			int l = getShieldEnchantmentLevel(living, ModEnchantments.SPELLPROOF);
 			if (l > 0)
 			{
 				event.setAmount(amount*(1.0f-(l/4.0F)));
 				if (event.getEntityLiving() instanceof EntityPlayer)
 				{
-					damageShield(amount, (EntityPlayer)event.getEntityLiving());
+					EnchantmentSpellproof.damageShield(amount, (EntityPlayer)event.getEntityLiving());
 				}
 			}
         }
 	}
-	/*
-	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public void onProjectileHit(ProjectileImpactEvent event)
-	{
-		Entity entity = event.getRayTraceResult().entityHit;
-		if (entity instanceof EntityLivingBase)
-		{
-			EntityLivingBase living = (EntityLivingBase) entity;
-			int i = EnchantmentHelper.getMaxEnchantmentLevel(Enchantments.PROJECTILE_PROTECTION, living);
-			if (new Random().nextInt(20) < i*21)
-			{
-				event.getEntity().setDead();
-				event.setCanceled(true);
-			}
-		}
-	}*/
 	
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public void onUpdate(LivingUpdateEvent event)
 	{
 		EntityLivingBase entity = event.getEntityLiving();
-		AttributeModifier modifier = new AttributeModifier(UUID.fromString("e6107045-134f-4c54-a645-75c3ae5c7a27"), "light_shield", 4, 2);
-		if (entity.isActiveItemStackBlocking() && getShieldEnchantmentLevel(entity, ModEnchantments.weightless) > 0)
+		
+		if (entity.isActiveItemStackBlocking() && getShieldEnchantmentLevel(entity, ModEnchantments.WEIGHTLESS) > 0)
 		{
+			AttributeModifier modifier = new AttributeModifier(EnchantmentWeightless.modifierUUID, "light_shield", 4, 2);
 			if (!entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).hasModifier(modifier))
 			{
 				entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).applyModifier(modifier);
@@ -125,7 +449,23 @@ public class EnchantmentHandler {
 		}
 		else 
 		{
-			entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).removeModifier(modifier);
+			entity.getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).removeModifier(EnchantmentWeightless.modifierUUID);
+		}
+		if (entity instanceof EntityPlayer)
+		{
+			int i = EnchantmentHelper.getMaxEnchantmentLevel(ModEnchantments.REACH, entity);
+			if (i > 0)
+			{
+				AttributeModifier extraReach = new AttributeModifier(EnchantmentReach.modifierUUID, "extra_reach", i, 0);
+				if (!entity.getEntityAttribute(EntityPlayer.REACH_DISTANCE).hasModifier(extraReach))
+				{
+					entity.getEntityAttribute(EntityPlayer.REACH_DISTANCE).applyModifier(extraReach);
+				}
+			}
+			else 
+			{
+				entity.getEntityAttribute(EntityPlayer.REACH_DISTANCE).removeModifier(EnchantmentReach.modifierUUID);
+			}
 		}
 		//Unfortunately, I can't correctly recreate effect of some armor enchantments, so I have to copy these enchantments on item in regular armor slot
 		if (entity instanceof EntityHorse)
@@ -133,7 +473,7 @@ public class EnchantmentHandler {
 			EntityHorse horse = (EntityHorse) event.getEntityLiving();
 			if (horse.getHorseArmorType() != HorseArmorType.NONE)
 			{
-				ItemStack armor = this.getHorseArmor(horse);
+				ItemStack armor = EnchantmentHandler.getHorseArmor(horse);
 				if (!EnchantmentHelper.getEnchantments(armor).isEmpty())
 				{
 					if (horse.getItemStackFromSlot(EntityEquipmentSlot.LEGS) == ItemStack.EMPTY)
@@ -164,99 +504,6 @@ public class EnchantmentHandler {
 		}
 	}
 	
-	@SubscribeEvent(priority = EventPriority.NORMAL)
-	public void onFOVChange(FOVUpdateEvent event)
-	{
-		if (event.getEntity().getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).getModifier(UUID.fromString("e6107045-134f-4c54-a645-75c3ae5c7a27")) != null)
-		{
-			float f = 1.0F;
-	
-	        if (event.getEntity().capabilities.isFlying)
-	        {
-	            f *= 1.1F;
-	        }
-	
-	        IAttributeInstance iattributeinstance = event.getEntity().getEntityAttribute(SharedMonsterAttributes.MOVEMENT_SPEED);
-	        double value = (double) iattributeinstance.getAttributeValue() / 5;
-	        f = (float)((double)f * ((value / (double)event.getEntity().capabilities.getWalkSpeed() + 1.0D) / 2.0D));
-	
-	        if (event.getEntity().capabilities.getWalkSpeed() == 0.0F || Float.isNaN(f) || Float.isInfinite(f))
-	        {
-	            f = 1.0F;
-	        }
-	
-	        if (event.getEntity().isHandActive() && event.getEntity().getActiveItemStack().getItem() == Items.BOW)
-	        {
-	            int i = event.getEntity().getItemInUseMaxCount();
-	            float f1 = (float)i / 20.0F;
-	
-	            if (f1 > 1.0F)
-	            {
-	                f1 = 1.0F;
-	            }
-	            else
-	            {
-	                f1 = f1 * f1;
-	            }
-	
-	            f *= 1.0F - f1 * 0.15F;
-	        }
-	        
-	        event.setNewfov(f);
-		}
-	}
-	
-	private boolean canBlockDamageSource(EntityLivingBase living, DamageSource damageSourceIn, boolean blocksUnblockable)
-    {
-		boolean flag = !damageSourceIn.isUnblockable();
-		if (blocksUnblockable && !damageSourceIn.isDamageAbsolute()) flag = true;
-        if ( flag && living.isActiveItemStackBlocking())
-        {
-            Vec3d vec3d = damageSourceIn.getDamageLocation();
-            if (vec3d != null)
-            {
-                Vec3d vec3d1 = living.getLook(1.0F);
-                Vec3d vec3d2 = vec3d.subtractReverse(new Vec3d(living.posX, living.posY, living.posZ)).normalize();
-                vec3d2 = new Vec3d(vec3d2.x, 0.0D, vec3d2.z);
-
-                if (vec3d2.dotProduct(vec3d1) < 0.0D)
-                {
-                    return true;
-                }
-            }
-        }
-    	
-    	return false;
-    }
-	
-	private void damageShield(float damage, EntityPlayer player)
-	{
-	    if (damage >= 3.0F && player.getActiveItemStack().getItem() instanceof ItemShield)
-	    {
-	        ItemStack copyBeforeUse = player.getActiveItemStack().copy();
-	        int i = 1 + MathHelper.floor(damage);
-	        player.getActiveItemStack().damageItem(i, player);
-
-	        if (player.getActiveItemStack().isEmpty())
-	        {
-	            EnumHand enumhand = player.getActiveHand();
-	            net.minecraftforge.event.ForgeEventFactory.onPlayerDestroyItem(player, copyBeforeUse, enumhand);
-
-	            if (enumhand == EnumHand.MAIN_HAND)
-	            {
-	            	player.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY);
-	            }
-	            else
-	            {
-	                player.setItemStackToSlot(EntityEquipmentSlot.OFFHAND, ItemStack.EMPTY);
-	            }
-
-	            player.resetActiveHand();
-	            player.playSound(SoundEvents.ITEM_SHIELD_BREAK, 0.8F, 0.8F + player.world.rand.nextFloat() * 0.4F);
-	        }
-	    }
-	}
-	
 	public int getShieldEnchantmentLevel(EntityLivingBase living, Enchantment enchantment)
 	{
 		if (living.isActiveItemStackBlocking())
@@ -266,9 +513,10 @@ public class EnchantmentHandler {
 		return 0;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static ItemStack getHorseArmor(EntityHorse horse)
 	{
-		Class clazz = horse.getClass();
+		Class<? extends EntityHorse> clazz = horse.getClass();
 		while (clazz != null)
 		{
 			if (clazz == EntityHorse.class)
@@ -296,7 +544,7 @@ public class EnchantmentHandler {
 					e1.printStackTrace();
 				}
 			}
-			clazz = clazz.getSuperclass();
+			clazz = (Class<? extends EntityHorse>) clazz.getSuperclass();
 		}
 		return ItemStack.EMPTY;
 	}
@@ -334,5 +582,13 @@ public class EnchantmentHandler {
                 }
             }
         }
+    }
+	
+	protected void setBlock(ItemStack stack, EntityPlayer player, World worldIn, BlockPos pos, int lvl)
+    {
+        worldIn.playSound(player, pos, SoundEvents.ITEM_HOE_TILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
+    	IBlockState state = lvl > 0 ? ModBlocks.FERTILIZED_FARMLAND.getDefaultState().withProperty(BlockFertilizedFarmland.FERTILITY, 5 * lvl) : Blocks.FARMLAND.getDefaultState();
+        worldIn.setBlockState(pos, state, 11);
+        stack.damageItem(1, player);
     }
 }

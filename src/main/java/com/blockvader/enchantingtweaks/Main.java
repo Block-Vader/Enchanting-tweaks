@@ -1,12 +1,14 @@
 package com.blockvader.enchantingtweaks;
 
+import com.blockvader.enchantingtweaks.capabilities.CapArrowProperties;
+import com.blockvader.enchantingtweaks.capabilities.CapMomentum;
 import com.blockvader.enchantingtweaks.eventhandler.ConfigEventHandler;
 import com.blockvader.enchantingtweaks.eventhandler.EnchantmentHandler;
 import com.blockvader.enchantingtweaks.eventhandler.OpenCustomGUI;
 import com.blockvader.enchantingtweaks.init.ModBlocks;
 import com.blockvader.enchantingtweaks.init.ModEnchantments;
 import com.blockvader.enchantingtweaks.init.ModItems;
-import com.blockvader.enchantingtweaks.proxy.CommonProxy;
+import com.blockvader.enchantingtweaks.proxy.IProxy;
 import com.blockvader.enchantingtweaks.tileentities.TileEntityBookshelf;
 
 import net.minecraft.util.ResourceLocation;
@@ -29,22 +31,34 @@ public class Main
 	public static Main instance;
 	
     public static final String MOD_ID = "enchanting_tweaks";
-    public static final String VERSION = "1.1";
+    public static final String VERSION = "1.2.1";
     public static final String MC_VERSION = "[1.12, 1.13)";
     public static boolean iscsb_ench_tableLoaded;
+    public static boolean isNaturaLoaded;
+    public static boolean isThaumcraftLoaded;
+    public static boolean isBoPLoaded;
+    
     
     @SidedProxy(clientSide = "com.blockvader.enchantingtweaks.proxy.ClientProxy", serverSide = "com.blockvader.enchantingtweaks.proxy.ServerProxy")
-	public static CommonProxy proxy;
+	public static IProxy proxy;
     
     @EventHandler
     public void preInit(FMLPreInitializationEvent event)
     {
+    	CapMomentum.register();
+    	CapArrowProperties.register();
+    	
 		MinecraftForge.EVENT_BUS.register(new ModBlocks());
 		MinecraftForge.EVENT_BUS.register(new ModItems());
 		MinecraftForge.EVENT_BUS.register(new OpenCustomGUI());
 		MinecraftForge.EVENT_BUS.register(new ModEnchantments());
 		MinecraftForge.EVENT_BUS.register(new EnchantmentHandler());
 		MinecraftForge.EVENT_BUS.register(new ConfigEventHandler());
+		
+		iscsb_ench_tableLoaded = Loader.isModLoaded("csb_ench_table");
+		isNaturaLoaded = Loader.isModLoaded("natura");
+		isThaumcraftLoaded = Loader.isModLoaded("thaumcraft");
+		isBoPLoaded = Loader.isModLoaded("biomesoplenty");
 		
 		proxy.preInit();
     }
@@ -62,6 +76,6 @@ public class Main
     @EventHandler
     public void postInit(FMLPostInitializationEvent event)
     {
-    	iscsb_ench_tableLoaded = Loader.isModLoaded("csb_ench_table");
+    	
     }
 }

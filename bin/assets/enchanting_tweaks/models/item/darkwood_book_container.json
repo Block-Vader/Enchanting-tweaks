@@ -1,7 +1,0 @@
-{
-	"parent": "enchanting_tweaks:item/book_container",
-	"textures": {
-		"0": "enchanting_tweaks:blocks/darkwood_planks",
-		"particle": "enchanting_tweaks:blocks/darkwood_planks"
-	}
-}

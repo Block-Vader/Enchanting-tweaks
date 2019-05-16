@@ -18,7 +18,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityEnchantmentTable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.event.AnvilUpdateEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -32,7 +31,7 @@ public class OpenCustomGUI {
 		World worldIn = event.getWorld();
 		EntityPlayer playerIn = event.getEntityPlayer();
 		BlockPos pos = event.getPos();
-		if (!worldIn.isRemote)
+		if (!worldIn.isRemote && ConfigHandler.ModifyEnchantingTable)
         {
 			{
 				TileEntity tileentity = worldIn.getTileEntity(pos);
@@ -52,15 +51,6 @@ public class OpenCustomGUI {
 	            }
 			}
         }
-	}
-	
-	@SubscribeEvent(priority=EventPriority.NORMAL, receiveCanceled=true)
-	public void onGuiOpen(GuiOpenEvent event)
-	{
-		if (event.getGui() != null)
-		{
-			//System.out.println(event.getGui().toString());
-		}
 	}
 	
 	@SubscribeEvent(priority=EventPriority.LOWEST, receiveCanceled=true)
@@ -107,7 +97,7 @@ public class OpenCustomGUI {
                 }
                 else
                 {
-                    if (!flag && (itemstack1.getItem() != itemstack2.getItem() || !(itemstack1.isItemStackDamageable() || ConfigHandler.AllowedOnTable.containsKey(itemstack.getItem()))))
+                    if (!flag && (itemstack1.getItem() != itemstack2.getItem() || !(itemstack1.isItemStackDamageable() || ConfigHandler.AllowedOnAnvil.containsKey(itemstack.getItem()))))
                     {
                         return;
                     }
@@ -144,7 +134,6 @@ public class OpenCustomGUI {
                             int j2 = ((Integer)map1.get(enchantment1)).intValue();
                             j2 = i2 == j2 ? j2 + 1 : Math.max(j2, i2);
                             boolean flag1 = ConfigHandler.canApplyOnAnvil(itemstack.getItem(), enchantment1);
-
                             if (itemstack.getItem() == Items.ENCHANTED_BOOK)
                             {
                                 flag1 = true;
@@ -204,6 +193,8 @@ public class OpenCustomGUI {
                             }
                         }
                     }
+                    
+        			System.out.println("2. " + flag2 + ", " + flag3);
 
                     if (flag3 && !flag2)
                     {

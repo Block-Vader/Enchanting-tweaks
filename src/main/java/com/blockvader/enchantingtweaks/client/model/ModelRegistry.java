@@ -10,7 +10,7 @@ import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class ModelRegistry {
-	
+	/*
 	@SubscribeEvent
 	public void registerBlockModels(ModelRegistryEvent event)
 	{
@@ -57,6 +57,15 @@ public class ModelRegistry {
 	private static void registerRender(Block block)
 	{
 		ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(block), 0, new ModelResourceLocation(block.getRegistryName(), "inventory"));
+	}*/
+	
+	@SubscribeEvent
+	public void registerBlockModels(ModelRegistryEvent event)
+	{
+		for(Block block : ModBlocks.blocks)
+		{
+			ModelLoader.setCustomModelResourceLocation(Item.getItemFromBlock(block), 0, new ModelResourceLocation(block.getRegistryName(), "inventory"));
+		}
 	}
 
 }

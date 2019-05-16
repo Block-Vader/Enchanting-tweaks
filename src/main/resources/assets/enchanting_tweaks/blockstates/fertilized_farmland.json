@@ -1,0 +1,20 @@
+{
+    "variants": {
+        "fertility=0": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=1": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=2": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=3": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=4": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=5": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=6": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=7": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=8": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=9": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=10": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=11": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=12": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=13": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=14": { "model": "enchanting_tweaks:fertilized_farmland" },
+        "fertility=15": { "model": "enchanting_tweaks:fertilized_farmland" }
+    }
+}

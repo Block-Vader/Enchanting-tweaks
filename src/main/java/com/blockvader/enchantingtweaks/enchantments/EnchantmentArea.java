@@ -3,11 +3,12 @@ package com.blockvader.enchantingtweaks.enchantments;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnumEnchantmentType;
 import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.ItemShield;
+import net.minecraft.item.ItemHoe;
 import net.minecraft.item.ItemStack;
 
-public class EnchantmentCounterattack extends Enchantment {
-	public EnchantmentCounterattack()
+public class EnchantmentArea extends Enchantment{
+	
+	public EnchantmentArea()
 	{
 		super(Rarity.RARE, EnumEnchantmentType.BREAKABLE, new EntityEquipmentSlot[]{EntityEquipmentSlot.MAINHAND,EntityEquipmentSlot.OFFHAND});
 	}
@@ -17,7 +18,7 @@ public class EnchantmentCounterattack extends Enchantment {
      */
     public int getMinEnchantability(int enchantmentLevel)
     {
-        return 20 + 10 * (enchantmentLevel - 1);
+        return 5 + 20 * (enchantmentLevel - 1);
     }
 
     /**
@@ -37,8 +38,6 @@ public class EnchantmentCounterattack extends Enchantment {
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack)
     {
-    	return stack.getItem() instanceof ItemShield;
+    	return stack.getItem() instanceof ItemHoe;
     }
-
 }
-

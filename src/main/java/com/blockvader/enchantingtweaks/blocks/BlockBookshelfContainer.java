@@ -15,7 +15,6 @@ import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
@@ -48,7 +47,6 @@ public class BlockBookshelfContainer extends Block
 		this.setLightOpacity(0);
         this.setHardness(2.0F);
         this.setSoundType(SoundType.WOOD);
-		this.setCreativeTab(CreativeTabs.DECORATIONS);
 		this.setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH));
 	}
 	
@@ -72,7 +70,7 @@ public class BlockBookshelfContainer extends Block
 	@Override
 	public int getFlammability(IBlockAccess world, BlockPos pos, EnumFacing face)
 	{
-		if (world.getBlockState(pos).getBlock() == ModBlocks.bloodwood_book_container) return 0;
+		if (world.getBlockState(pos).getBlock() == ModBlocks.BLOODWOOD_BOOK_CONTAINER) return 0;
 		return 20;
 	}
 	
@@ -120,7 +118,7 @@ public class BlockBookshelfContainer extends Block
 	{
 		if (worldIn.getBlockState(fromPos).getBlock() == Blocks.FIRE && worldIn.getTileEntity(pos) instanceof TileEntityBookshelf)
 		{
-			if (state.getBlock() != ModBlocks.bloodwood_book_container)
+			if (state.getBlock() != ModBlocks.BLOODWOOD_BOOK_CONTAINER)
 			{
 				((TileEntityBookshelf)worldIn.getTileEntity(pos)).burn();
 			}
